@@ -1,0 +1,57 @@
+version: "3.6"
+services:
+  front:
+    build: front
+    container_name: front
+    restart: always
+    ports:
+      - "8080:80"
+    volumes:
+      - './front/nginx_conf.d/default.conf:/etc/nginx/nginx.conf:ro'
+    environment:
+      - NGINX_HOST=dev.fileshare.com
+
+  waf:
+    build: waf
+    command: sh -c "/wait && node /src/app/bin/www"
+    container_name: waf
+    environment:
+      - DB_NAME=fileshare
+      - DB_USER=file_user
+      - DB_PASS=file_password
+      - JWT_SECRET=thisissecretandyoushouldchangeit
+      - DB_HOST=database
+      - WAIT_HOSTS=database:3306, backend:3000
+      - WAIT_BEFORE=30
+      - WAIT_TIMEOUT=300
+      - WAIT_HOST_CONNECT_TIMEOUT=10
+
+  backend:
+    build: api
+    command: sh -c "/wait && node /src/app/bin/www"
+    container_name: backend
+    environment:
+      - DB_NAME=fileshare
+      - DB_USER=file_user
+      - DB_PASS=file_password
+      - JWT_SECRET=thisissecretandyoushouldchangeit
+      - DB_HOST=database
+      - WAIT_HOSTS=database:3306
+      - WAIT_BEFORE=30
+      - WAIT_TIMEOUT=300
+      - WAIT_HOST_CONNECT_TIMEOUT=10
+
+  database:
+    container_name: database
+    image: mysql:5.7
+    restart: always
+    volumes:
+      - db_data:/var/lib/mysql
+    environment:
+      - MYSQL_ROOT_PASSWORD=root
+      - MYSQL_DATABASE=fileshare
+      - MYSQL_USER=file_user
+      - MYSQL_PASSWORD=file_password
+
+volumes:
+  db_data:
