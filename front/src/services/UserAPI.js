@@ -52,11 +52,14 @@ const UserAPI = {
     localStorage.setItem('user', jwt);
   },
 
-  getAuthHeader(){
-    if (!this.isJWTValid()){
+  async getAuthHeader(){
+    const isValid = await this.isJWTValid();
+    if (!isValid){
       this.logout();
+      return new Headers();
     }
     const jwt = this.getCurrentUser();
+    
     const headers = new Headers();
     headers.append('Authorization', `Bearer ${jwt}`);
     return headers;
@@ -65,26 +68,43 @@ const UserAPI = {
   logout(){
     localStorage.removeItem('user');
     window.location.assign("/");
+    window.location.reload();
   },
 
   isLoggedIn(){
     return localStorage.getItem('user') !== null;
   },
-  isJWTValid(){
+
+  async isJWTValid(){
     const jwt = this.getCurrentUser();
     if (jwt){
-      const jwtbody = jwt.split('.')[1];
-      const payload = JSON.parse(atob(jwtbody));
-      const unvalidDate = payload.exp * 1000;
-      const now = new Date();
-      return (unvalidDate > now.getTime());
+      try {
+        const jwtbody = jwt.split('.')[1];
+        const payload = JSON.parse(atob(jwtbody));
+        const unvalidDate = payload.exp * 1000;
+        const now = new Date();
+        const BASEURL = Utils.getBackendBaseURL();
+        if (unvalidDate > now.getTime()){
+          const headers = new Headers();
+          headers.append('Authorization', `Bearer ${jwt}`);
+          headers.append("Content-Type", "application/json");
+          const response = await fetch(`${BASEURL}/rest/auth/profile`, {
+            method: 'GET',
+            headers
+          });
+          const data = await response.json();
+          return !data.deleteAccount;
+        }
+      } catch(e) {
+        return false;
+      }
     }
     return false;
   },
 
   async getProfile(){
     const BASEURL = Utils.getBackendBaseURL();
-    const headers = this.getAuthHeader();
+    const headers = await this.getAuthHeader();
     headers.append("Content-Type", "application/json");
     const response = await fetch(`${BASEURL}/rest/auth/profile`, {
       method: 'GET',

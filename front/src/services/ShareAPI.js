@@ -5,7 +5,7 @@ import Utils from './Utils';
 const ShareAPI = {
   async createShare(sharename, listOfFilesUid){
     const BASEURL = Utils.getBackendBaseURL();
-    const headers = UserAPI.getAuthHeader();
+    const headers = await UserAPI.getAuthHeader();
     headers.append("Content-Type", "application/json");
     const data = JSON.stringify({name: sharename, files: listOfFilesUid})
     const response = await fetch(`${BASEURL}/rest/shares/`, {
@@ -17,7 +17,7 @@ const ShareAPI = {
   },
 
   async listShare(){
-    const headers = UserAPI.getAuthHeader();
+    const headers = await UserAPI.getAuthHeader();
     const BASEURL = Utils.getBackendBaseURL();
     headers.append("Content-Type", "application/json");
     const response = await fetch(`${BASEURL}/rest/shares/`, {
@@ -28,7 +28,7 @@ const ShareAPI = {
   },
 
   async togglePublish(uid){
-    const headers = UserAPI.getAuthHeader();
+    const headers = await UserAPI.getAuthHeader();
     const BASEURL = Utils.getBackendBaseURL();
     headers.append("Content-Type", "application/json");
     const response = await fetch(`${BASEURL}/rest/shares/${uid}/toggle-publish`, {
@@ -40,7 +40,7 @@ const ShareAPI = {
 
   async giveAccess(uid, mfa, username){
     const BASEURL = Utils.getBackendBaseURL();
-    const headers = UserAPI.getAuthHeader();
+    const headers = await UserAPI.getAuthHeader();
     headers.append("Content-Type", "application/json");
     const data = JSON.stringify({code: mfa, username})
     const response = await fetch(`${BASEURL}/rest/shares/${uid}/give-access`, {
@@ -53,7 +53,7 @@ const ShareAPI = {
 
   async deleteShare(uid){
     const BASEURL = Utils.getBackendBaseURL();
-    const headers = UserAPI.getAuthHeader();
+    const headers = await UserAPI.getAuthHeader();
     headers.append("Content-Type", "application/json");
     const response = await fetch(`${BASEURL}/rest/shares/${uid}/`, {
       method: 'DELETE',
@@ -64,7 +64,7 @@ const ShareAPI = {
 
   async downloadFileShareAuth(shareUID, fileName){
     const BASEURL = Utils.getBackendBaseURL();
-    const headers = UserAPI.getAuthHeader();
+    const headers = await UserAPI.getAuthHeader();
     headers.append("Content-Type", "application/json");
     const response = await fetch(`${BASEURL}/rest/shares/${shareUID}/files/${fileName}`, {
       method: 'GET',

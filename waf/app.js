@@ -40,12 +40,17 @@ schedule.scheduleJob("0 5 * * *", async () => {
     }
   });
 });
+
 app.use(function(err, req, res, next) {
   if(err.name === 'UnauthorizedError') {
-    res.status(err.status).send({error: true, message:err.message});
+    if (err.code == 'revoked_token'){
+      res.status(err.status).send({error: true, message:err.message, deleteAccount: true});
+    }else{
+      res.status(err.status).send({error: true, message:err.message});
+    }
     return;
   }
-  next();
+  res.status(500).send({error: true, message:"Something bad happened"});
 });
 
 module.exports = app;

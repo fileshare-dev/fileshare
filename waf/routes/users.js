@@ -10,7 +10,9 @@ const User = db.User;
 
 const {Op} = require("sequelize");
 const router = express.Router({mergeParams: true});
+
 router.use(authMiddleWare.unless({path: [/.*\/login/, /.*\/register/]}));
+
 
 router.post('/login', function (req, res, next) {
   const generic_error_message = {

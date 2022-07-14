@@ -11,8 +11,6 @@ RUN npm install
 
 COPY . ./
 
-COPY ./README.md /stage
-
 EXPOSE 3000
 
 CMD ["node", "/src/app/bin/www"]

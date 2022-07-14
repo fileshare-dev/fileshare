@@ -23,6 +23,13 @@ router.use(authMiddleWare.unless({
 }));
 
 router.post('/', async function (req, res) {
+  if (req.user.verified !== true) {
+    return res.status(403).send({
+      error: true,
+      message: 'Only verified users can create shares.'
+    });
+  }
+
   if (!req.body.name) {
     res.status(400).send({
       error: true,
@@ -50,12 +57,6 @@ router.post('/', async function (req, res) {
       message: "Forbidden char in filename"
     });
     return;
-  }
-  if (req.user.verified !== true) {
-    return res.status(403).send({
-      error: true,
-      message: 'Only verified users can create shares.'
-    });
   }
 
   /* Check if another share owned by
@@ -155,6 +156,12 @@ router.get('/', async function (req, res) {
 });
 
 router.post('/:uid/give-access', async function (req, res) {
+  if (req.user.verified !== true) {
+    return res.status(403).send({
+      error: true,
+      message: 'Only verified users can give access to shares.'
+    });
+  }
   let shareUid = req.params.uid;
   let user = await User.findOne({
     where: {
@@ -210,6 +217,13 @@ router.post('/:uid/give-access', async function (req, res) {
 });
 
 router.get('/:uid/toggle-publish', async function (req, res) {
+  if (req.user.verified !== true) {
+    return res.status(403).send({
+      error: true,
+      message: 'Only verified users can publish shares.'
+    });
+  }
+
   let shareUid = req.params.uid;
   let share = await Share.findByPk(shareUid);
   if (!share) {
@@ -269,6 +283,12 @@ router.get('/:uid', async function (req, res) {
 });
 
 router.post('/:uid/files', async function (req, res) {
+  if (req.user.verified !== true) {
+    return res.status(403).send({
+      error: true,
+      message: 'Only verified users can add files.'
+    });
+  }
   let fileId = req.body.fileId;
   let shareUid = req.params.uid;
   let share = await Share.findByPk(shareUid);
@@ -278,12 +298,6 @@ router.post('/:uid/files', async function (req, res) {
       message: "Share not found"
     });
     return;
-  }
-  if (req.user.verified !== true) {
-    return res.status(403).send({
-      error: true,
-      message: 'Only verified users can add files.'
-    });
   }
   if (share.UserId !== req.user.id) {
     return res.status(403).send({
@@ -445,10 +459,13 @@ router.get('/download/:link([a-zA-Z0-9_-]{40,100})/:fileUid/raw', async function
       message: "An error has occurred."
     });
   }
+  
+  let expired_message = "The public link has expired";
+
   if (share.validUntil < now) {
     return res.status(498).send({
       error: true,
-      message: "The public link has expired.",
+      message: expired_message,
     });
   }
   let files = await share.getFiles();

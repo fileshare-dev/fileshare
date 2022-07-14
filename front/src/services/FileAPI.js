@@ -5,7 +5,7 @@ const FileAPI = {
   async upload(file){
     const BASEURL = Utils.getBackendBaseURL();
     const data = new FormData();
-    const headers = UserAPI.getAuthHeader();
+    const headers = await UserAPI.getAuthHeader();
     data.append('file', file, file.name);
     const response = await fetch(`${BASEURL}/rest/files/upload`, {
       method: 'POST',
@@ -16,7 +16,7 @@ const FileAPI = {
   },
   async list(){
     const BASEURL = Utils.getBackendBaseURL();
-    const headers = UserAPI.getAuthHeader();
+    const headers = await UserAPI.getAuthHeader();
     const response = await fetch(`${BASEURL}/rest/files/`, {
       method: 'GET',
       headers
@@ -26,7 +26,7 @@ const FileAPI = {
   },
   async deleteFile(uid){
     const BASEURL = Utils.getBackendBaseURL();
-    const headers = UserAPI.getAuthHeader();
+    const headers = await UserAPI.getAuthHeader();
     const response = await fetch(`${BASEURL}/rest/files/${uid}`, {
       method: 'DELETE',
       headers
