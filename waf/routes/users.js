@@ -34,6 +34,18 @@ router.post('/login', function (req, res, next) {
       "message": "Password missing or empty"
     });
   }
+  if(req.body.username.length > 100) {
+    return res.status(400).send({
+      "error": true,
+      "message": "Username too long. Max characters: 100."
+    });
+  }
+  if(req.body.password.length > 250) {
+    return res.status(400).send({
+      "error": true,
+      "message": "Password too long. Max characters: 250."
+    });
+  }
 
   User.findOne({where: {username: req.body.username.trim()}}).then(function (data) {
     if (!data) {
@@ -57,6 +69,12 @@ router.post('/login', function (req, res, next) {
         expiresIn: config['JWT_EXPIRY'],
       })
     });
+  }).catch(e => {
+      console.error(e);
+      res.status(500).send({
+        error: true,
+        message: "Internal error."
+      });
   });
 });
 
@@ -88,6 +106,18 @@ router.post('/register', function (req, res, next) {
       message: "Please provide a password of at least 8 characters."
     });
   }
+  if(req.body.username.length > 100) {
+    return res.status(400).send({
+      "error": true,
+      "message": "Username too long. Max characters: 100."
+    });
+  }
+  if(req.body.password.length > 250) {
+    return res.status(400).send({
+      "error": true,
+      "message": "Password too long. Max characters: 250."
+    });
+  }
 
   User.findAll({
     where: {
@@ -107,7 +137,13 @@ router.post('/register', function (req, res, next) {
       });
       current_user.save().then(function (data) {
         res.send({id: data.id});
-      })
+      }).catch(e => {
+        console.error(e);
+        res.status(500).send({
+          error: true,
+          message: "Internal error."
+        });
+      });
     } else {
       let current_user = data[0];
       let message = '';
@@ -121,6 +157,12 @@ router.post('/register', function (req, res, next) {
         message: message
       });
     }
+  }).catch(e => {
+      console.error(e);
+      res.status(500).send({
+        error: true,
+        message: "Internal error."
+      });
   });
 });
 
@@ -151,6 +193,30 @@ router.post('/change-password', function (req, res, next) {
       message: "New password confirmation missing or empty."
     });
   }
+  if(req.body.new_password.length < 8) {
+    return res.status(400).send({
+      error: true,
+      message: "Please provide a password of at least 8 characters."
+    });
+  }
+  if(req.body.new_password.length > 250) {
+    return res.status(400).send({
+      "error": true,
+      "message": "Password too long. Max characters: 250."
+    });
+  }
+  if(req.body.new_password_confirmation.length < 8) {
+    return res.status(400).send({
+      error: true,
+      message: "Please provide a password of at least 8 characters."
+    });
+  }
+  if(req.body.new_password_confirmation.length > 250) {
+    return res.status(400).send({
+      "error": true,
+      "message": "Password too long. Max characters: 250."
+    });
+  }
 
   User.findByPk(req.user.id).then(function (data) {
     if (!data) {
@@ -173,6 +239,12 @@ router.post('/change-password', function (req, res, next) {
         status: "Password changed successfully."
       });
     });
+  }).catch(e => {
+      console.error(e);
+      res.status(500).send({
+        error: true,
+        message: "Internal error."
+      });
   });
 });
 

@@ -20,41 +20,41 @@ function makeShareFileRoute(shareUuid, name) {
 }
 
 router.post('/', async function (req, res, next) {
-  if (req.body.name) {
-    if (!new RegExp('^[a-zA-z]{4,80}$').test(req.body.name)) {
-      return res.send({
-        error: true,
-        message: "Forbidden characters in filename."
-      });
-    }
-  }
-
-  if (req.body.files) {
-    if (!Array.isArray(req.body.files)) {
-      return res.status(400).send({
-        error: true,
-        message: "Files' list is not an array."
-      });
-    }
-
-    let nonValidFileUid = []
-    req.body.files.forEach(function (uid) {
-      if (!new RegExp('^[a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{12}$').test(uid)) {
-        nonValidFileUid.push(uid);
-      }
-    });
-    if (nonValidFileUid.length !== 0) {
-      return res.send({
-        error: true,
-        message: "Some file uid is not valid."
-      });
-    }
-  }
-
-  let url = utils.createBackendUrl('/shares/')
-  let token = req.headers['authorization'];
   let response = null;
   try {
+    if (req.body.name) {
+      if (!new RegExp('^[a-zA-z]{4,80}$').test(req.body.name)) {
+        return res.send({
+          error: true,
+          message: "Forbidden characters in filename."
+        });
+      }
+    }
+
+    if (req.body.files) {
+      if (!Array.isArray(req.body.files)) {
+        return res.status(400).send({
+          error: true,
+          message: "Files' list is not an array."
+        });
+      }
+
+      let nonValidFileUid = []
+      req.body.files.forEach(function (uid) {
+        if (!new RegExp('^[a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{12}$').test(uid)) {
+          nonValidFileUid.push(uid);
+        }
+      });
+      if (nonValidFileUid.length !== 0) {
+        return res.send({
+          error: true,
+          message: "Some file uid is not valid."
+        });
+      }
+    }
+
+    let url = utils.createBackendUrl('/shares/')
+    let token = req.headers['authorization'];
     response = await axios.post(
       url, req.body, {headers: {"Authorization": token}});
   } catch (err) {

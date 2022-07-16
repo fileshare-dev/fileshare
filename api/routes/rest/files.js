@@ -55,6 +55,12 @@ router.post('/upload', async function (req, res, next) {
       res.send({
         uid: data.id
       });
+    }).catch(e => {
+      console.error(e);
+      res.status(500).send({
+        error: true,
+        message: 'Internal error.'
+      })
     });
   });
 });
@@ -104,7 +110,19 @@ router.delete('/:uid', function (req, res) {
       res.send({
         success: true
       });
+    }).catch(e => {
+      console.error(e);
+      res.status(500).send({
+        error: true,
+        message: 'Internal error.'
+      })
     });
+  }).catch(e => {
+    console.error(e);
+    res.status(500).send({
+      error: true,
+      message: 'Internal error.'
+    })
   });
 });
 

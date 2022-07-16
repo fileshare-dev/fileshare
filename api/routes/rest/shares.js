@@ -112,6 +112,12 @@ router.post('/', async function (req, res) {
         res.send({
           uid: share.id
         });
+      }).catch(e => {
+        console.error(e);
+        res.status(500).send({
+          error: true,
+          message: 'Internal error.'
+        })
       });
     } else {
       res.send({
@@ -147,7 +153,19 @@ router.get('/', async function (req, res) {
               return {id: f.id, name: f.name};
             })
           };
+        }).catch(e => {
+          console.error(e);
+          res.status(500).send({
+            error: true,
+            message: 'Internal error.'
+          })
         });
+      }).catch(e => {
+        console.error(e);
+        res.status(500).send({
+          error: true,
+          message: 'Internal error.'
+        })
       });
     });
     let data = await Promise.all(promises);
@@ -213,6 +231,12 @@ router.post('/:uid/give-access', async function (req, res) {
     res.send({
       success: true
     });
+  }).catch(e => {
+    console.error(e);
+    res.status(500).send({
+      error: true,
+      message: 'Internal error.'
+    })
   });
 });
 
@@ -249,6 +273,12 @@ router.get('/:uid/toggle-publish', async function (req, res) {
       validUntil: validUntil,
       isPublic: !share.isPublic
     });
+  }).catch(e => {
+    console.error(e);
+    res.status(500).send({
+      error: true,
+      message: 'Internal error.'
+    })
   });
 });
 
@@ -325,6 +355,12 @@ router.post('/:uid/files', async function (req, res) {
     res.send({
       success: true,
     });
+  }).catch(e => {
+    console.error(e);
+    res.status(500).send({
+      error: true,
+      message: 'Internal error.'
+    })
   });
 });
 
@@ -368,6 +404,12 @@ router.delete('/:uid/files/:filename', async function (req, res) {
     res.send({
       success: true
     });
+  }).catch(e => {
+    console.error(e);
+    res.status(500).send({
+      error: true,
+      message: 'Internal error.'
+    })
   });
 });
 
@@ -550,7 +592,19 @@ router.delete('/:uid', async function (req, res) {
       res.send({
         success: true
       });
+    }).catch(e => {
+      console.error(e);
+      res.status(500).send({
+        error: true,
+        message: 'Internal error.'
+      })
     });
+  }).catch(e => {
+    console.error(e);
+    res.status(500).send({
+      error: true,
+      message: 'Internal error.'
+    })
   });
 });
 

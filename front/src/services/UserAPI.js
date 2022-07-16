@@ -1,3 +1,5 @@
+import { useNavigate } from 'react-router-dom';
+
 import Utils from './Utils';
 
 const UserAPI = {

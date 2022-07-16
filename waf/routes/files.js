@@ -27,18 +27,18 @@ router.post('/upload', async function (req, res, next) {
   }
 
   let url = utils.createBackendUrl(`/files/upload`);
-
-  let form = new FormData();
-  let token = req.headers['authorization'];
-  form.append('file', fs.createReadStream(req.files.file.tempFilePath), req.files.file.name);
   let response = null;
-  let requestConfig = {
-    headers: {
-      'Authorization': token,
-      ...form.getHeaders()
-    }
-  }
+
   try {
+    let form = new FormData();
+    let token = req.headers['authorization'];
+    form.append('file', fs.createReadStream(req.files.file.tempFilePath), req.files.file.name);
+    let requestConfig = {
+      headers: {
+        'Authorization': token,
+        ...form.getHeaders()
+      }
+    }
     response = await axios.post(url, form, requestConfig);
   } catch (err) {
     if(typeof err.response !== "undefined")
@@ -50,15 +50,16 @@ router.post('/upload', async function (req, res, next) {
 });
 
 router.get('/', async function (req, res, next) {
-  let token = req.headers['authorization'];
   let response = null;
-  let url = utils.createBackendUrl(`/files/`);
-  let requestConfig = {
-    headers: {
-      'Authorization': token
-    }
-  }
+
   try {
+    let token = req.headers['authorization'];
+    let url = utils.createBackendUrl(`/files/`);
+    let requestConfig = {
+      headers: {
+        'Authorization': token
+      }
+    }
     response = await axios.get(url, requestConfig);
   } catch (err) {
     if(typeof err.response !== "undefined")
@@ -70,18 +71,18 @@ router.get('/', async function (req, res, next) {
 });
 
 router.delete('/:uid', async function(req, res){
-  let uid = req.params.uid;
-  if (!new RegExp('^[a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{12}$').test(uid)) {
-    return res.send({
-      error: true,
-      message: "File uid is not valid."
-    });
-  }
-  let url = utils.createBackendUrl(`/files/${uid}`);
-  let token = req.headers['authorization'];
-
   let response = null;
   try {
+    let uid = req.params.uid;
+    if (!new RegExp('^[a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{12}$').test(uid)) {
+      return res.send({
+        error: true,
+        message: "File uid is not valid."
+      });
+    }
+    let url = utils.createBackendUrl(`/files/${uid}`);
+    let token = req.headers['authorization'];
+
     response = await axios.delete(url, {headers: {"Authorization": token}});
   } catch (err) {
     if(typeof err.response !== "undefined")
@@ -90,7 +91,6 @@ router.delete('/:uid', async function(req, res){
       response = {status: 500, data: "Internal error."};
   }
   res.status(response.status).send(response.data);
-
 });
 
 module.exports = router;
