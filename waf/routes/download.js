@@ -7,11 +7,17 @@ const utils = require('../utils.js');
 
 
 router.get('/download/:publiclink', async function (req, res, next) {
+  let response = {
+    status: 400,
+    data: {
+      error: true,
+      message: "Public link is not valid."
+    }
+  };
   let publiclink = req.params.publiclink;
   if (publiclink != null) {
     let regexp = new RegExp('^[a-zA-Z0-9_-]{40,100}$');
     if (regexp.test(publiclink)) {
-      let response = null;
       let url = utils.createBackendUrl(`/shares/download/${publiclink}`);
       try {
         response = await axios.get(url);
@@ -21,14 +27,9 @@ router.get('/download/:publiclink', async function (req, res, next) {
         else
           response = {status: 500, data: "Internal error."};
       }
-      res.status(response.status).send(response.data);
-    } else {
-      res.status(500).send({
-        error: true,
-        message: "Public link is not valid."
-      });
     }
   }
+  res.status(response.status).send(response.data);
 });
 
 router.get('/download/:publiclink/:fileUid/raw', async function (req, res, next) {
@@ -61,15 +62,13 @@ router.get('/download/:publiclink/:fileUid/raw', async function (req, res, next)
       message: "UID is not valid"
     });
   }
-  let response = null;
+  let response = {status: 500, data: "Internal error."};
   let url = utils.createBackendUrl(`/shares/download/${publiclink}/${fileUid}/raw`);
   try {
     response = await axios.get(url);
   } catch (err) {
     if(typeof err.response !== "undefined")
       response = err.response
-    else
-      response = {status: 500, data: "Internal error."};
   }
   res.status(response.status).send(response.data);
 });

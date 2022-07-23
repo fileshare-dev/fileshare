@@ -27,7 +27,7 @@ router.post('/upload', async function (req, res, next) {
   }
 
   let url = utils.createBackendUrl(`/files/upload`);
-  let response = null;
+  let response = {status: 500, data: "Internal error."};
 
   try {
     let form = new FormData();
@@ -43,14 +43,12 @@ router.post('/upload', async function (req, res, next) {
   } catch (err) {
     if(typeof err.response !== "undefined")
       response = err.response
-    else
-      response = {status: 500, data: "Internal error."};
   }
   res.status(response.status).send(response.data);
 });
 
 router.get('/', async function (req, res, next) {
-  let response = null;
+  let response = {status: 500, data: "Internal error."};
 
   try {
     let token = req.headers['authorization'];
@@ -64,18 +62,16 @@ router.get('/', async function (req, res, next) {
   } catch (err) {
     if(typeof err.response !== "undefined")
       response = err.response
-    else
-      response = {status: 500, data: "Internal error."};
   }
   res.status(response.status).send(response.data);
 });
 
 router.delete('/:uid', async function(req, res){
-  let response = null;
+  let response = {status: 500, data: "Internal error."};
   try {
     let uid = req.params.uid;
     if (!new RegExp('^[a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{12}$').test(uid)) {
-      return res.send({
+      return res.status(400).send({
         error: true,
         message: "File uid is not valid."
       });
@@ -87,8 +83,6 @@ router.delete('/:uid', async function(req, res){
   } catch (err) {
     if(typeof err.response !== "undefined")
       response = err.response
-    else
-      response = {status: 500, data: "Internal error."};
   }
   res.status(response.status).send(response.data);
 });

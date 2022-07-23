@@ -17,12 +17,8 @@ const authMiddleWare = require('../../middlewares/auth.js');
 
 const router = express.Router({mergeParams: true});
 
-/* Public download */
-router.use(authMiddleWare.unless({
-  path: [/^\/shares\/download\//]
-}));
 
-router.post('/', async function (req, res) {
+router.post('/', authMiddleWare, async function (req, res) {
   if (req.user.verified !== true) {
     return res.status(403).send({
       error: true,
@@ -33,28 +29,28 @@ router.post('/', async function (req, res) {
   if (!req.body.name) {
     res.status(400).send({
       error: true,
-      message: "Missing share name"
+      message: "Missing share name."
     });
     return;
   }
   if (!req.body.files) {
     res.status(400).send({
       error: true,
-      message: "List of files missing"
+      message: "List of files missing."
     });
     return;
   }
   if (!Array.isArray(req.body.files)) {
     res.status(400).send({
       error: true,
-      message: "List of file is not array"
+      message: "List of file is not array."
     });
     return;
   }
   if (!new RegExp('^[a-zA-Z]{4,80}$').test(req.body.name)) {
-    res.send({
+    res.status(400).send({
       error: true,
-      message: "Forbidden char in filename"
+      message: "Forbidden char in filename."
     });
     return;
   }
@@ -71,64 +67,71 @@ router.post('/', async function (req, res) {
   });
 
   if (presentShare.length !== 0) {
-    res.send({
+    res.status(400).send({
       error: true,
-      message: "Share already exists"
+      message: "Share already exists."
     });
     return;
   }
 
   let listOfFiles = req.body.files;
+
+  if (listOfFiles.length <= 0) {
+    res.status(400).send({
+      error: true,
+      message: "Empty files' list."
+    });
+    return;
+  }
+
   /* Confirm each file is owned by the requesting user */
   let data = await File.findAll({
     where: {
       id: listOfFiles
     }
   });
-  if (data) {
-    if (data.length !== 0) {
-      let notOwned = data.filter(function (file) {
-        return file.UserId !== req.user.id;
-      });
-      if (notOwned.length !== 0) {
-        res.send({
-          error: true,
-          message: "The file does not belongs to you",
-          files: notOwned.map(file => file.id)
-        });
-        return;
-      }
-      let current_share = Share.build({
-        name: req.body.name,
-        link: base60.encode(crypto.randomBytes(48)),
-      });
-
-      let user = await User.findByPk(req.user.id);
-      current_share.save().then(function (share) {
-        for (index in data) {
-          current_share.addFile(data[index]);
-        }
-        current_share.setUser(user);
-        res.send({
-          uid: share.id
-        });
-      }).catch(e => {
-        console.error(e);
-        res.status(500).send({
-          error: true,
-          message: 'Internal error.'
-        })
-      });
-    } else {
-      res.send({
+  if (data && data.length !== 0) {
+    let notOwned = data.filter(function (file) {
+      return file.UserId !== req.user.id;
+    });
+    if (notOwned.length !== 0) {
+      res.status(403).send({
         error: true,
-        message: "No file not found"
+        message: "The file does not belong to you.",
+        files: notOwned.map(file => file.id)
       });
+      return;
     }
+    let current_share = Share.build({
+      name: req.body.name,
+      link: base60.encode(crypto.randomBytes(48)),
+    });
+
+    let user = await User.findByPk(req.user.id);
+    current_share.save().then(function (share) {
+      for (index in data) {
+        current_share.addFile(data[index]);
+      }
+      current_share.setUser(user);
+      res.send({
+        uid: share.id
+      });
+    }).catch(e => {
+      console.error(e);
+      res.status(500).send({
+        error: true,
+        message: 'Internal error.'
+      })
+    });
+  } else {
+    res.status(404).send({
+      error: true,
+      message: "No file found."
+    });
   }
 });
 
-router.get('/', async function (req, res) {
+router.get('/', authMiddleWare, async function (req, res) {
   // List shares
   let user = await User.findByPk(req.user.id);
   let shares = await user.getAccessibleShare();
@@ -165,15 +168,20 @@ router.get('/', async function (req, res) {
         res.status(500).send({
           error: true,
           message: 'Internal error.'
-        })
+        });
       });
     });
     let data = await Promise.all(promises);
     res.send({shares: data});
+  } else {
+    res.status(404).send({
+      error: true,
+      message: 'Share not found.'
+    });
   }
 });
 
-router.post('/:uid/give-access', async function (req, res) {
+router.post('/:uid/give-access', authMiddleWare, async function (req, res) {
   if (req.user.verified !== true) {
     return res.status(403).send({
       error: true,
@@ -187,18 +195,18 @@ router.post('/:uid/give-access', async function (req, res) {
     }
   });
   if (!user) {
-    res.send({
+    res.status(404).send({
       error: true,
-      message: "User not found"
+      message: "User not found."
     });
     return;
   }
 
   let code = req.body.code;
   if (!code) {
-    res.send({
+    res.status(400).send({
       error: true,
-      message: "Missing code"
+      message: "Missing code."
     });
     return;
   }
@@ -206,13 +214,13 @@ router.post('/:uid/give-access', async function (req, res) {
   if (!share) {
     return res.status(404).send({
       error: true,
-      message: "Share not found"
+      message: "Share not found."
     });
   }
   if (share.UserId !== req.user.id) {
     return res.status(403).send({
       error: true,
-      message: "You're not the share's owner"
+      message: "You're not the share's owner."
     });
   }
   let owner = await share.getUser();
@@ -240,7 +248,7 @@ router.post('/:uid/give-access', async function (req, res) {
   });
 });
 
-router.get('/:uid/toggle-publish', async function (req, res) {
+router.get('/:uid/toggle-publish', authMiddleWare, async function (req, res) {
   if (req.user.verified !== true) {
     return res.status(403).send({
       error: true,
@@ -253,13 +261,13 @@ router.get('/:uid/toggle-publish', async function (req, res) {
   if (!share) {
     return res.status(404).send({
       error: true,
-      message: "Share not found"
+      message: "Share not found."
     });
   }
   if (share.UserId !== req.user.id) {
     return res.status(403).send({
       error: true,
-      message: "You don't have the permission to edit this share"
+      message: "You don't have the permission to edit this share."
     });
   }
   let validUntil = null;
@@ -282,13 +290,13 @@ router.get('/:uid/toggle-publish', async function (req, res) {
   });
 });
 
-router.get('/:uid', async function (req, res) {
+router.get('/:uid', authMiddleWare, async function (req, res) {
   let shareUid = req.params.uid;
   let share = await Share.findByPk(shareUid);
   if (!share) {
     return res.status(404).send({
       error: true,
-      message: "Share not found"
+      message: "Share not found."
     });
   }
   let files = await share.getFiles();
@@ -312,7 +320,7 @@ router.get('/:uid', async function (req, res) {
   });
 });
 
-router.post('/:uid/files', async function (req, res) {
+router.post('/:uid/files', authMiddleWare, async function (req, res) {
   if (req.user.verified !== true) {
     return res.status(403).send({
       error: true,
@@ -325,27 +333,27 @@ router.post('/:uid/files', async function (req, res) {
   if (!share) {
     res.status(404).send({
       error: true,
-      message: "Share not found"
+      message: "Share not found."
     });
     return;
   }
   if (share.UserId !== req.user.id) {
     return res.status(403).send({
       error: true,
-      message: "You don't have the permission to edit this share"
+      message: "You don't have the permission to edit this share."
     });
   }
   let file = await File.findByPk(fileId);
   if (!file) {
     return res.status(404).send({
       error: true,
-      message: "File not found"
+      message: "File not found."
     });
   }
   if (file.UserId !== req.user.id) {
     return res.status(403).send({
       error: true,
-      message: "File does not belong to you"
+      message: "File does not belong to you."
     });
   }
   if (!share.hasFile(file)) {
@@ -364,7 +372,7 @@ router.post('/:uid/files', async function (req, res) {
   });
 });
 
-router.delete('/:uid/files/:filename', async function (req, res) {
+router.delete('/:uid/files/:filename', authMiddleWare, async function (req, res) {
   if (req.user.verified !== true) {
     return res.status(403).send({
       error: true,
@@ -377,13 +385,13 @@ router.delete('/:uid/files/:filename', async function (req, res) {
   if (!share) {
     res.status(404).send({
       error: true,
-      message: "Share not found"
+      message: "Share not found."
     });
   }
   if (share.UserId !== req.user.id) {
     return res.status(403).send({
       error: true,
-      message: "You don't have the permission to delete this share's file"
+      message: "You don't have the permission to delete this share's file."
     });
   }
 
@@ -396,7 +404,7 @@ router.delete('/:uid/files/:filename', async function (req, res) {
   if (!wantedFile) {
     res.status(404).send({
       error: true,
-      message: "File not present in share"
+      message: "File not present in share."
     });
     return;
   }
@@ -413,14 +421,14 @@ router.delete('/:uid/files/:filename', async function (req, res) {
   });
 });
 
-router.get('/:uid/files/:filename', async function (req, res) {
+router.get('/:uid/files/:filename', authMiddleWare, async function (req, res) {
   let shareUid = req.params.uid;
   let filename = req.params.filename;
   let share = await Share.findByPk(shareUid);
   if (!share) {
     res.status(404).send({
       error: true,
-      message: "Share not found"
+      message: "Share not found."
     });
     return;
   }
@@ -566,7 +574,7 @@ router.get('/download/:link([a-zA-Z0-9_-]{40,100})', async function (req, res) {
 });
 
 
-router.delete('/:uid', async function (req, res) {
+router.delete('/:uid', authMiddleWare, async function (req, res) {
   if (req.user.verified !== true) {
     return res.status(403).send({
       error: true,
